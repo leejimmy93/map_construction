@@ -166,9 +166,10 @@ plot.map(cross_m,cross.drop.marker)
 plot.map(cross.drop.marker,newmap.drop.marker)
 plot.map(newmap.drop.marker)
 
-cross.drop.marker2 <- orderMarkers(cross.drop.marker,window=7,use.ripple = TRUE,verbose=T)
+########## stopped here ###############
+cross.drop.marker2 <- orderMarkers(cross.drop.marker,window=8,use.ripple = TRUE,verbose=T)
 cross.drop.marker2 <- est.rf(cross.drop.marker2)
-plot.rf(cross.drop.marker2)
+plot.rf(cross.drop.marker2, col.scheme = "redblue", alternate.chrid = T)
 
 #not working well
 plot.map(newmap.drop.marker,cross.drop.marker2)
