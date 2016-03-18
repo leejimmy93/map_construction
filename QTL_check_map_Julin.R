@@ -16,7 +16,7 @@ pull.map(cross, chr = c("A02","A06","C01","C09"))
 # go to original .csv file, change the second groups' names to x_1 
 
 ## import the modified cross data
-cross_m <- read.cross(file = "151212_rqrl_19_chrom.csv", 
+cross_m <- read.cross(file = "~/Desktop/Brassica_project/QTL_mapping/map_construction/151212_rqrl_19_chrom.csv", 
                       genotypes=c("N","H","D","X","Y"))
 
 summary(cross_m) 
@@ -163,13 +163,8 @@ write.csv(pull.geno(cross.drop.marker),file="F2_415_Dropped_geno.csv")
 
 newmap.drop.marker <- est.map(cross.drop.marker,verbose=T,error.prob=.01)
 plot.map(cross_m,cross.drop.marker)
-################# drop marker ##########################################
-# explore cross with some markers dropped
-plot.rf(cross.drop.marker)
-summary(cross.drop.marker)
-summary(cross) #??????????? Check this tomorrow!!! 
-########################################################################
 plot.map(cross.drop.marker,newmap.drop.marker)
+plot.map(newmap.drop.marker)
 
 cross.drop.marker2 <- orderMarkers(cross.drop.marker,window=7,use.ripple = TRUE,verbose=T)
 cross.drop.marker2 <- est.rf(cross.drop.marker2)
