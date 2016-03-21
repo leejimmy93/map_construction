@@ -3,8 +3,8 @@ library(ggplot2)
 library(reshape2)
 
 ###################### Read in cross data & data initial check ########################################
-setwd("~/Desktop/Brassica_project/QTL_mapping/map_costruction/")
-cross <- read.cross(file="~/Desktop/Brassica_project/QTL_mapping/map_costruction/151212_rqrl_19_chrom_original.csv",
+setwd("~/Desktop/Brassica_project/QTL_mapping/map_construction/")
+cross <- read.cross(file="151212_rqrl_19_chrom_original.csv",
                    genotypes=c("N","H","D","X","Y"))
          
 ## Take a look at of the cross data
@@ -48,8 +48,45 @@ plot.rf(cross_m, col.scheme = "redblue", alternate.chrid = T)
 nm <- est.map(cross_m, error.prob = 0.001)
 plot(nm, alternate.chrid = T) 
 pull.map(cross_m, chr = c("A03","A05")) # longer length was plot than what was indicated in the data? 
+pull.map(cross_m)
 
+################ Remove the bad genotypes from a matrix in a rqtl cross object: assign "NA" to double recombinants
+
+cross.drop.marker <- cross_m
+
+for (chr in names(cross.drop.marker$geno)) { # for each chromosome in cross genotype data
+  my.chr <- get(chr,cross.drop.marker$geno) # return the genotype data, including data & map
+  print(paste(chr,"NA before",sum(is.na(my.chr$data)))) 
+  if(ncol(my.chr$data) > 3) { 
+    my.chr$data[,2:(ncol(my.chr$data)-1)] <- sapply(2:(ncol(my.chr$data)-1),function(i) {
+      apply(my.chr$data[,(i-1):(i+1)],1,function(gt) {
+        if (any(is.na(gt))) return(gt[2]) #technically should be looking at the next genotyped marker.
+        if ( (length(unique(gt)) == 2) & (gt[1] == gt[3])) return(NA)
+        if ( length(unique(gt))  == 3) return(NA)
+        return(gt[2])
+      })
+    })
+  }
+  cross.drop.marker$geno <- within(cross.drop.marker$geno,assign(chr,my.chr))
+  print(paste(chr,"NA after",sum(is.na(get(chr,cross.drop.marker$geno)$data))))
+}
+
+write.csv(pull.geno(cross.drop.marker),file="F2_415_Dropped_geno.csv")
+## Try to improve the map
+
+newmap.drop.marker <- est.map(cross.drop.marker,verbose=T,error.prob=.01) # why going through 
+# the last section of code doesn't assign new map 
+plot.map(cross.drop.marker,newmap.drop.marker)
+plot.map(newmap.drop.marker)
+plot.rf(cross.drop.marker, col.scheme = "redblue", alternate.chrid = T) 
+
+# make a similar graph as what Julin has made to check double crossover
+plot.rf(cross.drop.marker, chr = "A06", col.scheme = "redblue")
 ###########################################################################
+# go through each chromosome separately 
+# A01
+plot.rf(cross_m, chr = "A01", col.scheme = "redblue")
+
 ## Focus on A03 for a bit to visuzlize problems. 
 
 plot.rf(cross_m,chr="A03", col.scheme = "redblue")
@@ -125,7 +162,7 @@ A03.recomb.count$percent_double_same <- apply(A03.recomb.count[,1:4],1, # apply 
 A03.recomb.count$percent_double_all <- apply(A03.recomb.count[,1:4],1,
                                              function(x) sum(x[c("double_recomb_same","double_recomb_different")],na.rm=TRUE) / 
                                                sum(x,na.rm=TRUE)*100) 
-# calcuate the percentage of double recomb out of all, regardless of same of diff
+# calcuate the percentage of double recomb out of all, regardless of same or diff
 
 head(A03.recomb.count)
 
@@ -135,38 +172,7 @@ write.csv(A03.recomb.count[order(A03.recomb.count$percent_double_same,decreasing
                            c("marker","percent_double_same")],file="B.napus_A03marker.csv")
 
 
-## Now lets do this for the entire genome
-
-#Remove the bad genotypes from a matrix in a rqtl cross object: assign "NA" to double recombnants
-
-cross.drop.marker <- cross_m
-
-for (chr in names(cross.drop.marker$geno)) { # for each chromosome in cross genotype data
-  my.chr <- get(chr,cross.drop.marker$geno) # return the genotype data, including data & map
-  print(paste(chr,"NA before",sum(is.na(my.chr$data)))) 
-  if(ncol(my.chr$data) > 3) { 
-    my.chr$data[,2:(ncol(my.chr$data)-1)] <- sapply(2:(ncol(my.chr$data)-1),function(i) {
-      apply(my.chr$data[,(i-1):(i+1)],1,function(gt) {
-        if (any(is.na(gt))) return(gt[2]) #technically should be looking at the next genotyped marker.
-        if ( (length(unique(gt)) == 2) & (gt[1] == gt[3])) return(NA)
-        if ( length(unique(gt))  == 3) return(NA)
-        return(gt[2])
-      })
-    })
-  }
-  cross.drop.marker$geno <- within(cross.drop.marker$geno,assign(chr,my.chr))
-  print(paste(chr,"NA after",sum(is.na(get(chr,cross.drop.marker$geno)$data))))
-}
-
-write.csv(pull.geno(cross.drop.marker),file="F2_415_Dropped_geno.csv")
-## Try to improve the map
-
-newmap.drop.marker <- est.map(cross.drop.marker,verbose=T,error.prob=.01)
-plot.map(cross_m,cross.drop.marker)
-plot.map(cross.drop.marker,newmap.drop.marker)
-plot.map(newmap.drop.marker)
-
-########## stopped here ###############
+# the one below takes a very long time to run
 cross.drop.marker2 <- orderMarkers(cross.drop.marker,window=8,use.ripple = TRUE,verbose=T)
 cross.drop.marker2 <- est.rf(cross.drop.marker2)
 plot.rf(cross.drop.marker2, col.scheme = "redblue", alternate.chrid = T)
@@ -174,10 +180,8 @@ plot.rf(cross.drop.marker2, col.scheme = "redblue", alternate.chrid = T)
 #not working well
 plot.map(newmap.drop.marker,cross.drop.marker2)
 
-plot.rf(newmap.drop.marker)
-
 #does not help
-rip1 <- ripple(cross.drop.marker2,"A03",window=7,n.cluster=2)
+rip1 <- ripple(cross.drop.marker2,chr = "A03",window=7,n.cluster=2)
 summary(rip1)
 
 #try to work through this with ripple
