@@ -45,7 +45,6 @@ plot.rf(cross_m, col.scheme = "redblue", alternate.chrid = T)
 # looks like they are on the right chromosomes but wrong order within each chromosome
 
 # estimate the genetic map
-nm <- est.map(cross_m, error.prob = 0.001)
 plot(nm, alternate.chrid = T) 
 pull.map(cross_m, chr = c("A03","A05")) # longer length was plot than what was indicated in the data? 
 pull.map(cross_m)
@@ -74,14 +73,43 @@ for (chr in names(cross.drop.marker$geno)) { # for each chromosome in cross geno
 write.csv(pull.geno(cross.drop.marker),file="F2_415_Dropped_geno.csv")
 ## Try to improve the map
 
+# calculate new map and replace map
 newmap.drop.marker <- est.map(cross.drop.marker,verbose=T,error.prob=.01) # why going through 
 # the last section of code doesn't assign new map 
-plot.map(cross.drop.marker,newmap.drop.marker)
-plot.map(newmap.drop.marker)
+cross.drop.marker <- replace.map(cross.drop.marker, newmap.drop.marker)
+
+plot.map(cross.drop.marker, alternate.chrid = T) # the old map
+plot.map(cross_m,cross.drop.marker, alternate.chrid = T) # map comparison
+
+########### make ggplot graph to check whehter there is change in double crossover problem.... 
+plot.rf(cross_m,chr="A03", col.scheme = "redblue")
+
+A03 <- cross_m$geno$A03$data # assign chr A03 geno data into A03
+
+dimnames(A03) <- list(F2=1:nrow(A03),marker=markernames(cross_m,"A03")) # create a list 
+# with "F2" and "marker" info inside, and assign these as the dimension names of object A03
+
+# distance calculation 
+A03.dist <- dist(A03) # compute the distance between the rows "individuals here"
+A03.clust <- hclust(A03.dist) # hierachical cluster analysis based on distance between individuals
+
+A03.melt <- melt(A03) # make A03 to long form 138 * 39
+A03.melt$F2 <- factor(A03.melt$F2,levels=A03.clust$order) # encode distance order between individuals as F2 orders
+
+# using ggplot to make plot for A03 markers
+pl <- ggplot(A03.melt,aes(x=F2,y=marker,fill=as.factor(value)))
+pl <- pl + geom_tile()
+pl <- pl + ggtitle("F2 genotypes")
+pl + scale_fill_manual(values=c("magenta","grey50","green"),labels=c("N","H","D"))
+#####################################################################################
+
+
 plot.rf(cross.drop.marker, col.scheme = "redblue", alternate.chrid = T) 
+plot.rf(cross_m, col.scheme = "redblue", alternate.chrid = T, chr = "A06")
+plot.rf(cross.drop.marker, col.scheme = "redblue", alternate.chrid = T, chr = "A06")
 
 # make a similar graph as what Julin has made to check double crossover
-plot.rf(cross.drop.marker, chr = "A06", col.scheme = "redblue")
+
 ###########################################################################
 # go through each chromosome separately 
 # A01
