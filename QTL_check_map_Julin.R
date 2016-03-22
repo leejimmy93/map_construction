@@ -84,7 +84,7 @@ cross.drop.marker <- replace.map(cross.drop.marker, newmap.drop.marker)
 plot.map(cross.drop.marker, alternate.chrid = T) # the old genetic map
 plot.map(cross_m,newmap.drop.marker, alternate.chrid = T) # genetic map comparison
 
-geno.image(cross_m, alternate.chrid = T) # grid with color pixels for different genotypes
+geno.image(cross.drop.marker, alternate.chrid = T) # grid with color pixels for different genotypes
 par(mfrow=c(1,2)) # create three rows and two colomns of plots with mfrow(1,2)
 geno.image(cross_m, chr = "A03") 
 geno.image(cross.drop.marker, chr = "A03") # compare grid w/ & w/o bad genotype info
@@ -100,96 +100,21 @@ par(mfrow=c(1,1)) # reset to 1:1
 plot.rf(cross.drop.marker, chr = "A01", col.scheme = "redblue") # A01 is OK??? 
 
 # A02
+plot.map(cross.drop.marker, chr = "A02")
 plot.rf(cross.drop.marker, chr = "A02", col.scheme = "redblue") 
-### To do tomorrow, understand which is more important, LOD score or genetic map? 
-### go back to qtl package 
-##########
-##########
-#########
-##########
+set.seed(100)
+rip1 <- ripple(cross.drop.marker,chr = "A02",window=8,n.cluster=2)
+cross.drop.marker2 <- switch.order(cross.drop.marker, "A02", rip1[2,])
+plot.rf(cross.drop.marker2, chr = "A02", col.scheme = "redblue") 
+set.seed(201)
+rip1 <- ripple(cross.drop.marker2,chr = "A02",window=8,n.cluster=2)
+summary(rip1)
+cross.drop.marker3 <- switch.order(cross.drop.marker2, "A02", rip1[2,])
+plot.rf(cross.drop.marker3, chr = "A02", col.scheme = "redblue") 
+
 ## Focus on A03 for a bit to visuzlize problems. 
-
+plot.map(cross.drop.marker3, chr = "A03")
 plot.rf(cross_m,chr="A03", col.scheme = "redblue")
-
-A03 <- cross_m$geno$A03$data # assign chr A03 geno data into A03
-
-dimnames(A03) <- list(F2=1:nrow(A03),marker=markernames(cross_m,"A03")) # create a list 
-# with "F2" and "marker" info inside, and assign these as the dimension names of object A03
-
-# distance calculation 
-A03.dist <- dist(A03) # compute the distance between the rows "individuals here"
-A03.clust <- hclust(A03.dist) # hierachical cluster analysis based on distance between individuals
-
-A03.melt <- melt(A03) # make A03 to long form 138 * 39
-A03.melt$F2 <- factor(A03.melt$F2,levels=A03.clust$order) # encode distance order between individuals as F2 orders
-
-# using ggplot to make plot for A03 markers
-pl <- ggplot(A03.melt,aes(x=F2,y=marker,fill=as.factor(value)))
-pl <- pl + geom_tile()
-pl <- pl + ggtitle("F2 genotypes")
-pl + scale_fill_manual(values=c("magenta","grey50","green"),labels=c("N","H","D"))
-
-## flag markers that are flanked by recombination on both sides.
-## Perhaps distinguish between being flanked by similar or different genotypes.
-
-# calculate recombination
-A03.recomb <- sapply(2:(ncol(A03)-1),function(i) { # apply the function to all markers except for the 1st and last one
-  tmp <- A03[,(i-1):(i+1)] # assign three marker data (i-1), i, (i+1) to tmp
-  apply(tmp,1,function(F2.gt) { # apply function F2.gt to tmp by row
-    F2.gt <- as.factor(F2.gt) # define F2.gt as factor then assign to F2.gt 
-    if (any(is.na(F2.gt))) return(NA) # if "NA", return "NA"
-    if (nlevels(F2.gt) == 1) return("no_recombination") 
-    if ( (nlevels(F2.gt) == 2) & (F2.gt[1] == F2.gt[3])) return("double_recomb_same") # double recombination same
-    if ( (nlevels(F2.gt) == 2) & (F2.gt[1] != F2.gt[3])) return("single_recomb") # single recombination
-    if (nlevels(F2.gt) == 3) return("double_recomb_different") # double recombination same
-  })
-})
-#### Check tomorrow, how to define double recomination??????? counting crossover, calc.errorlod #########################
-A03.recomb
-class(A03.recomb)
-dim(A03.recomb)
-colnames(A03.recomb)
-rownames(A03.recomb)
-
-### try calc.errorlod, problem
-map <- est.map(cross_m, error.prob = 0.01)
-cross_mm <- replace.map(cross_m, map)
-corss_mm <- calc.errorlod(cross_mm) # problem
-top <- top.errorlod(cross_mm, cutoff = 5) 
-top
-plot.geno(cross_mm, A03, top$id[top$chr==A03], cutoff = 5)
-
-############### I added the above to check A03.recomb ################################################################
-# transform to a dataframe with marker and recomination frequency 
-colnames(A03.recomb) <- colnames(A03)[2:(ncol(A03)-1)] # assign colnames to A03.recomb (except the 1st and last one)
-
-A03.recomb.count <- as.data.frame(matrix(nrow=ncol(A03.recomb),ncol=length(na.omit((unique(as.character(A03.recomb))))), 
-                                         dimnames=list(marker=colnames(A03.recomb),result=na.omit(unique(as.character(A03.recomb))))))
-# the above make a dataframe with marker # as row #, recombination type as col #, also assign dimnames: marker names as marker
-# recomination type as result
-
-A03.recomb.count$marker <- rownames((A03.recomb.count)) # add another colomn "marker"
-
-for(marker in colnames(A03.recomb)) { # for every marker in A03.recomb
-  tmp <- as.data.frame(table(A03.recomb[,marker])) # pull out recomb type, make a frequency table and define as a data.frame
-  A03.recomb.count[marker,as.character(tmp$Var1)] <- tmp$Freq # assign frequency for each reocom to A03.recom.count
-}
-
-A03.recomb.count$percent_double_same <- apply(A03.recomb.count[,1:4],1, # apply to each row of A03.recomb.count
-                                              function(x) x["double_recomb_same"]/sum(x,na.rm=TRUE)*100) 
-# x calculate the percentage of double recomb same out of all 
-
-A03.recomb.count$percent_double_all <- apply(A03.recomb.count[,1:4],1,
-                                             function(x) sum(x[c("double_recomb_same","double_recomb_different")],na.rm=TRUE) / 
-                                               sum(x,na.rm=TRUE)*100) 
-# calcuate the percentage of double recomb out of all, regardless of same or diff
-
-head(A03.recomb.count)
-
-with(A03.recomb.count,plot(percent_double_all,percent_double_same)) 
-
-write.csv(A03.recomb.count[order(A03.recomb.count$percent_double_same,decreasing = TRUE),
-                           c("marker","percent_double_same")],file="B.napus_A03marker.csv")
 
 
 # the one below takes a very long time to run
