@@ -50,6 +50,7 @@ pull.map(cross_m, chr = c("A03","A05")) # longer length was plot than what was i
 pull.map(cross_m)
 
 ################ Remove the bad genotypes from a matrix in a rqtl cross object: assign "NA" to double recombinants
+################ Written by Julin ###################################################################
 
 cross.drop.marker <- cross_m
 
@@ -78,43 +79,34 @@ newmap.drop.marker <- est.map(cross.drop.marker,verbose=T,error.prob=.01) # why 
 # the last section of code doesn't assign new map 
 cross.drop.marker <- replace.map(cross.drop.marker, newmap.drop.marker)
 
-plot.map(cross.drop.marker, alternate.chrid = T) # the old map
-plot.map(cross_m,cross.drop.marker, alternate.chrid = T) # map comparison
+############################ draw graph for new cross data ###############################
 
-########### make ggplot graph to check whehter there is change in double crossover problem.... 
-plot.rf(cross_m,chr="A03", col.scheme = "redblue")
+plot.map(cross.drop.marker, alternate.chrid = T) # the old genetic map
+plot.map(cross_m,newmap.drop.marker, alternate.chrid = T) # genetic map comparison
 
-A03 <- cross_m$geno$A03$data # assign chr A03 geno data into A03
+geno.image(cross_m, alternate.chrid = T) # grid with color pixels for different genotypes
+par(mfrow=c(1,2)) # create three rows and two colomns of plots with mfrow(1,2)
+geno.image(cross_m, chr = "A03") 
+geno.image(cross.drop.marker, chr = "A03") # compare grid w/ & w/o bad genotype info
 
-dimnames(A03) <- list(F2=1:nrow(A03),marker=markernames(cross_m,"A03")) # create a list 
-# with "F2" and "marker" info inside, and assign these as the dimension names of object A03
+# compare rf graph compare w/ & w/o bad genotype data
+plot.rf(cross_m, col.scheme = "redblue", alternate.chrid = T) 
+plot.rf(cross.drop.marker, col.scheme = "redblue", alternate.chrid = T) # why no difference??? 
+par(mfrow=c(1,1)) # reset to 1:1
 
-# distance calculation 
-A03.dist <- dist(A03) # compute the distance between the rows "individuals here"
-A03.clust <- hclust(A03.dist) # hierachical cluster analysis based on distance between individuals
-
-A03.melt <- melt(A03) # make A03 to long form 138 * 39
-A03.melt$F2 <- factor(A03.melt$F2,levels=A03.clust$order) # encode distance order between individuals as F2 orders
-
-# using ggplot to make plot for A03 markers
-pl <- ggplot(A03.melt,aes(x=F2,y=marker,fill=as.factor(value)))
-pl <- pl + geom_tile()
-pl <- pl + ggtitle("F2 genotypes")
-pl + scale_fill_manual(values=c("magenta","grey50","green"),labels=c("N","H","D"))
-#####################################################################################
-
-
-plot.rf(cross.drop.marker, col.scheme = "redblue", alternate.chrid = T) 
-plot.rf(cross_m, col.scheme = "redblue", alternate.chrid = T, chr = "A06")
-plot.rf(cross.drop.marker, col.scheme = "redblue", alternate.chrid = T, chr = "A06")
-
-# make a similar graph as what Julin has made to check double crossover
-
-###########################################################################
+############################### go through each chomosome separately #######################
 # go through each chromosome separately 
 # A01
-plot.rf(cross_m, chr = "A01", col.scheme = "redblue")
+plot.rf(cross.drop.marker, chr = "A01", col.scheme = "redblue") # A01 is OK??? 
 
+# A02
+plot.rf(cross.drop.marker, chr = "A02", col.scheme = "redblue") 
+### To do tomorrow, understand which is more important, LOD score or genetic map? 
+### go back to qtl package 
+##########
+##########
+#########
+##########
 ## Focus on A03 for a bit to visuzlize problems. 
 
 plot.rf(cross_m,chr="A03", col.scheme = "redblue")
