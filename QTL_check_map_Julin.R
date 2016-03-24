@@ -81,7 +81,7 @@ cross.drop.marker <- replace.map(cross.drop.marker, newmap.drop.marker)
 
 ############################ draw graph for new cross data ###############################
 
-plot.map(cross.drop.marker, alternate.chrid = T) # the old genetic map
+plot.map(cross_m, alternate.chrid = T) # the old genetic map
 plot.map(cross_m,newmap.drop.marker, alternate.chrid = T) # genetic map comparison
 
 geno.image(cross.drop.marker, alternate.chrid = T) # grid with color pixels for different genotypes
@@ -94,10 +94,37 @@ plot.rf(cross_m, col.scheme = "redblue", alternate.chrid = T)
 plot.rf(cross.drop.marker, col.scheme = "redblue", alternate.chrid = T) # why no difference??? 
 par(mfrow=c(1,1)) # reset to 1:1
 
+##################### drop markers with double crossover ##################
+##### dosen't seem work 
+
+geno <- pull.geno(cross_m)
+dim(geno)
+all.marker <- colnames(geno)
+
+# calculate the number of double crossover for each marker
+double.crossover.count <- sapply(all.marker, function(marker){
+  sum(is.na(geno_new[,marker]))-sum(is.na(geno[,marker]))
+}
+)
+
+double.crossover.count <- as.data.frame(double.crossover.count)
+double.crossover.count
+dens(double.crossover.count)
+marker.drop <- rownames(subset(double.crossover.count, double.crossover.count>30))
+marker.drop
+
+# drop marker with double crossover more than 15
+cross.drop.marker.drop <- drop.markers(cross.drop.marker, marker.drop)
+summary(cross.drop.marker.drop)
+map.new <- est.map(cross.drop.marker.drop)
+plot.map(cross.drop.marker,map.new)
+plot.rf(cross.drop.marker.drop, col.scheme = "redblue")
+
 ############################### go through each chomosome separately #######################
 # go through each chromosome separately 
 # A01
 plot.rf(cross.drop.marker, chr = "A01", col.scheme = "redblue") # A01 is OK??? 
+geno.image(cross.drop.marker, chr = "A01")
 
 # A02
 plot.map(cross.drop.marker, chr = "A02")
@@ -111,14 +138,30 @@ rip1 <- ripple(cross.drop.marker2,chr = "A02",window=8,n.cluster=2)
 summary(rip1)
 cross.drop.marker3 <- switch.order(cross.drop.marker2, "A02", rip1[2,])
 plot.rf(cross.drop.marker3, chr = "A02", col.scheme = "redblue") 
+geno.image(cross.drop.marker3, chr = "A02")
 
-## Focus on A03 for a bit to visuzlize problems. 
+## Focus on A03 for a bit to visuzlize problems, come back to fix later.... 
 plot.map(cross.drop.marker3, chr = "A03")
-plot.rf(cross_m,chr="A03", col.scheme = "redblue")
+plot.rf(cross.drop.marker3, chr = "A03", col.scheme = "redblue")
+rf.A03 <- pull.rf(cross.drop.marker3, chr = "A03")
+A03 <- markernames(cross.drop.marker3, chr='A03')
+plot(rf.A03, A03[35], bandcol = "gray70", ylim = c(0,1), alternate.chrid = TRUE)
+plot.rf(cross.drop.marker3, col.scheme = "redblue")
+markernames(cross.drop.marker3, chr = "A03")
+geno.image(cross.drop.marker3, chr = "A03")
+
+#############
+
+# A04, no improvement, OK????? 
+plot.map(cross.drop.marker3, chr = "A04")
+plot.rf(cross.drop.marker3, chr="A04", col.scheme = "redblue")
+rip1 <- ripple(cross.drop.marker3, chr = "A04", window = 7)
+
+# A05 
+plot.map(cross.drop.marker3, chr = "A05")
+plot.rf(cross.drop.marker3, chr = "A05", col.scheme = "redblue")
 
 
-# the one below takes a very long time to run
-cross.drop.marker2 <- orderMarkers(cross.drop.marker,window=8,use.ripple = TRUE,verbose=T)
 cross.drop.marker2 <- est.rf(cross.drop.marker2)
 plot.rf(cross.drop.marker2, col.scheme = "redblue", alternate.chrid = T)
 
