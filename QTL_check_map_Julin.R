@@ -155,19 +155,6 @@ plot.rf(cross.drop.marker, chr = "A03", col.scheme = "redblue", alternate.chrid 
 plot.rf(cross.drop.marker.drop, chr = "A03", col.scheme = "redblue", alternate.chrid = T)
 pull.map(cross.drop.marker.drop, chr = "A03")
 
-# remove segregation problem markers, doesn't seem work...  
-test <- drop.markers(cross.drop.marker.drop, "FPBPN0006")
-set.seed(1)
-test.drop <- orderMarkers(test,  
-                          window=4, use.ripple = T, maxit=4000, 
-                          error.prob=0.0001)
-map.test.drop <- est.map(test.drop)
-summary.map(map.test.drop)
-plot.map(map.test.drop)
-plot.rf(test.drop, col.scheme = "redblue", alternate.chrid = T)
-
-plot.rf(test.drop, chr = "A03", col.scheme = "redblue", alternate.chrid = T)
-
 ############################### go through each chomosome separately #######################
 rf.full <- pull.rf(cross.drop.marker)
 
