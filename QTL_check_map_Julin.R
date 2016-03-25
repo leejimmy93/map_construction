@@ -209,50 +209,6 @@ par(mfrow=c(1,1))
 plot(rf.A03, A03[28], bandcol = "gray70", ylim = c(0,1), alternate.chrid = TRUE)
 find.markerpos(cross.drop.marker3,"FPBPN0164")
 
-# blast A03 marker against napa & rapa chr A03, and try that order 
-write.table(A03, file = "A03.txt")
-#### napa chr A03
-cross.drop.marker4 <- switch.order(cross.drop.marker3,"A03",c(16,31,37,30,11,36,7,28,35,10,32,26,13:15,9,17,18,8,24,21,22,12,39,25,19,27,5,29,20,6,4,33,34,2,3,23,38,1))
-map.new <- est.map(cross.drop.marker4)
-plot.map(map.new)
-
-plotMap(cross.drop.marker4, chr='A03') 
-plot.rf(cross.drop.marker4, chr='A03', col.scheme = "redblue")
-
-#### try rapa genome order... 
-#############
-# drop markers that could not find blast result from rapa genome
-cross.drop.marker5 <- drop.markers(cross.drop.marker3, c("FPBPN0283","FPBPN0399","FPBPN1183"))
-set.seed(1)
-cross.drop.marker5 <- orderMarkers(cross.drop.marker5,  
-                          window=4, use.ripple = T, maxit=4000, 
-                          error.prob=0.0001)
-map.5 <- est.map(cross.drop.marker5, error.prob = 0.001)
-summary.map(map.5)
-plot.rf(cross.drop.marker5, chr = "A03", col.scheme = "redblue", alternate.chrid = T)
-pull.map(cross.drop.marker5, chr = "A03")
-
-cross.drop.marker5 <- switch.order(cross.drop.marker5,"A03",c(17,8,10,20,24,7,23,9,4,19,27,21,6,22,16,5,26,28,11,12,18,31,29,30,13,15,14,25,2,35,3,36,34,32,33,1))
-map.new <- est.map(cross.drop.marker5)
-plot.map(map.new)
-
-plotMap(cross.drop.marker5, chr='A03') 
-plot.rf(cross.drop.marker5, chr='A03', col.scheme = "redblue")
-
-### what if try drop double crossover & rapa blast result... 
-markernames(cross.drop.marker.drop, chr = "A03")
-cross.drop.marker.drop.test <- switch.order(cross.drop.marker.drop, "A03", c(17,19,6,18,16,20,21,7,15,14,5,4,12,11,13,8,9,10,2,3,1))
-cross.drop.marker.drop.test <- orderMarkers(cross.drop.marker.drop.test,  
-                                   window=4, use.ripple = T, maxit=4000, 
-                                   error.prob=0.0001)
-map.new <- est.map(cross.drop.marker.drop.test)
-plot.map(map.new)
-
-plotMap(cross.drop.marker.drop.test, chr='A03') 
-plot.rf(cross.drop.marker.drop.test, chr='A03', col.scheme = "redblue")
-plot.rf(cross.drop.marker.drop.test, col.scheme = "redblue")
-plot.rf(cross.drop.marker.drop, col.scheme = "redblue")
-
 # A04, no improvement, OK????? 
 plot.map(cross.drop.marker3, chr = "A04")
 plot.rf(cross.drop.marker3, chr="A04", col.scheme = "redblue")
