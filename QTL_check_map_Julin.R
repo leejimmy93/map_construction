@@ -27,6 +27,16 @@ summary(cross_m)
 test <- geno.table(cross_m)
 test[test$P.value < 0.01,] # which critical value should be used if not 0.05 or 0.01??? 
 
+#### may remove later depends on the figure result
+#          chr missing AA AB BB not.BB not.AA      P.value
+# FPBPN0006 A03      11 48 52 27      0      0 3.867612e-03
+# FPBPN0205 A03       6 37 44 51      0      0 1.480172e-04
+# FPBRN0434 A03       1 43 75 19      0      0 8.057372e-03
+# FPBPN0364 A05       6 18 68 46      0      0 2.478752e-03
+# FPBPN0981 A10       9 20 64 45      0      0 7.837486e-03
+# FPBPN1513 C02       6 43 70 19      0      0 9.991100e-03
+# FPBPN0103 C09       4 54 39 41      0      0 2.346263e-06
+
 # 2) compare individual's genotype similarity. Assumption: no two individuals with very similary genotypes
 cg <- comparegeno(cross_m) 
 dim(cg) 
@@ -45,6 +55,7 @@ plot.rf(cross_m, col.scheme = "redblue", alternate.chrid = T)
 # looks like they are on the right chromosomes but wrong order within each chromosome
 
 # estimate the genetic map
+nm <- est.map(cross_m)
 plot(nm, alternate.chrid = T) 
 pull.map(cross_m, chr = c("A03","A05")) # longer length was plot than what was indicated in the data? 
 pull.map(cross_m)
@@ -110,23 +121,65 @@ double.crossover.count <- sapply(all.marker, function(marker){
 double.crossover.count <- as.data.frame(double.crossover.count)
 double.crossover.count
 dens(double.crossover.count)
-marker.drop <- rownames(subset(double.crossover.count, double.crossover.count>30))
+marker.drop <- rownames(subset(double.crossover.count, double.crossover.count>10))
 marker.drop
 
-# drop marker with double crossover more than 15
+# drop marker with double crossover more than 
 cross.drop.marker.drop <- drop.markers(cross.drop.marker, marker.drop)
 summary(cross.drop.marker.drop)
+set.seed(5678)
+cross.drop.marker.drop <- orderMarkers(cross.drop.marker.drop,  
+                          window=4, use.ripple = T, maxit=4000, 
+                          error.prob=0.0001)
+
 map.new <- est.map(cross.drop.marker.drop)
-plot.map(cross.drop.marker,map.new)
-plot.rf(cross.drop.marker.drop, col.scheme = "redblue")
+plot.map(map.new)
+plot.rf(cross.drop.marker.drop, col.scheme = "redblue", alternate.chrid = T)
+
+# pairwise comparison of rf and LOD score before & after dropping marker
+par(mfrow=c(2,1))
+plot.rf(cross.drop.marker, chr = "A03", col.scheme = "redblue", alternate.chrid = T)
+plot.rf(cross.drop.marker.drop, chr = "A03", col.scheme = "redblue", alternate.chrid = T)
+
+# try ripple again
+set.seed(1234)
+cross.drop.marker.drop <- orderMarkers(cross.drop.marker.drop,  
+                                       window=4, use.ripple = T, maxit=4000, 
+                                       error.prob=0.0001)
+map.new2 <- est.map(cross.drop.marker.drop)
+summary.map(cross.drop.marker.drop)
+plot.map(map.new2)
+plot.rf(cross.drop.marker.drop, col.scheme = "redblue", alternate.chrid = T)
+
+plot.rf(cross.drop.marker, chr = "A03", col.scheme = "redblue", alternate.chrid = T)
+plot.rf(cross.drop.marker.drop, chr = "A03", col.scheme = "redblue", alternate.chrid = T)
+pull.map(cross.drop.marker.drop, chr = "A03")
+
+# remove segregation problem markers, doesn't seem work...  
+test <- drop.markers(cross.drop.marker.drop, "FPBPN0006")
+set.seed(1)
+test.drop <- orderMarkers(test,  
+                          window=4, use.ripple = T, maxit=4000, 
+                          error.prob=0.0001)
+map.test.drop <- est.map(test.drop)
+summary.map(map.test.drop)
+plot.map(map.test.drop)
+plot.rf(test.drop, col.scheme = "redblue", alternate.chrid = T)
+
+plot.rf(test.drop, chr = "A03", col.scheme = "redblue", alternate.chrid = T)
 
 ############################### go through each chomosome separately #######################
+rf.full <- pull.rf(cross.drop.marker)
+
 # go through each chromosome separately 
-# A01
+####### A01
 plot.rf(cross.drop.marker, chr = "A01", col.scheme = "redblue") # A01 is OK??? 
 geno.image(cross.drop.marker, chr = "A01")
 
-# A02
+A01 <- markernames(cross.drop.marker, chr = "A01")
+plot(rf.full, A01[2], bandcol = "gray70", ylim = c(0,1), alternate.chrid = TRUE)
+
+####### A02
 plot.map(cross.drop.marker, chr = "A02")
 plot.rf(cross.drop.marker, chr = "A02", col.scheme = "redblue") 
 set.seed(100)
@@ -140,17 +193,65 @@ cross.drop.marker3 <- switch.order(cross.drop.marker2, "A02", rip1[2,])
 plot.rf(cross.drop.marker3, chr = "A02", col.scheme = "redblue") 
 geno.image(cross.drop.marker3, chr = "A02")
 
-## Focus on A03 for a bit to visuzlize problems, come back to fix later.... 
+A02 <- markernames(cross.drop.marker, chr = "A02")
+plot(rf.full, A02[1], bandcol = "gray70", ylim = c(0,1), alternate.chrid = TRUE)
+
+######## A03 
 plot.map(cross.drop.marker3, chr = "A03")
 plot.rf(cross.drop.marker3, chr = "A03", col.scheme = "redblue")
+
+## looks like chr assignment is OK, order within chromosome doesn't look right
 rf.A03 <- pull.rf(cross.drop.marker3, chr = "A03")
 A03 <- markernames(cross.drop.marker3, chr='A03')
-plot(rf.A03, A03[35], bandcol = "gray70", ylim = c(0,1), alternate.chrid = TRUE)
-plot.rf(cross.drop.marker3, col.scheme = "redblue")
-markernames(cross.drop.marker3, chr = "A03")
-geno.image(cross.drop.marker3, chr = "A03")
+A03
 
+par(mfrow=c(1,1))
+plot(rf.A03, A03[28], bandcol = "gray70", ylim = c(0,1), alternate.chrid = TRUE)
+find.markerpos(cross.drop.marker3,"FPBPN0164")
+
+# blast A03 marker against napa & rapa chr A03, and try that order 
+write.table(A03, file = "A03.txt")
+#### napa chr A03
+cross.drop.marker4 <- switch.order(cross.drop.marker3,"A03",c(16,31,37,30,11,36,7,28,35,10,32,26,13:15,9,17,18,8,24,21,22,12,39,25,19,27,5,29,20,6,4,33,34,2,3,23,38,1))
+map.new <- est.map(cross.drop.marker4)
+plot.map(map.new)
+
+plotMap(cross.drop.marker4, chr='A03') 
+plot.rf(cross.drop.marker4, chr='A03', col.scheme = "redblue")
+
+#### try rapa genome order... 
 #############
+# drop markers that could not find blast result from rapa genome
+cross.drop.marker5 <- drop.markers(cross.drop.marker3, c("FPBPN0283","FPBPN0399","FPBPN1183"))
+set.seed(1)
+cross.drop.marker5 <- orderMarkers(cross.drop.marker5,  
+                          window=4, use.ripple = T, maxit=4000, 
+                          error.prob=0.0001)
+map.5 <- est.map(cross.drop.marker5, error.prob = 0.001)
+summary.map(map.5)
+plot.rf(cross.drop.marker5, chr = "A03", col.scheme = "redblue", alternate.chrid = T)
+pull.map(cross.drop.marker5, chr = "A03")
+
+cross.drop.marker5 <- switch.order(cross.drop.marker5,"A03",c(17,8,10,20,24,7,23,9,4,19,27,21,6,22,16,5,26,28,11,12,18,31,29,30,13,15,14,25,2,35,3,36,34,32,33,1))
+map.new <- est.map(cross.drop.marker5)
+plot.map(map.new)
+
+plotMap(cross.drop.marker5, chr='A03') 
+plot.rf(cross.drop.marker5, chr='A03', col.scheme = "redblue")
+
+### what if try drop double crossover & rapa blast result... 
+markernames(cross.drop.marker.drop, chr = "A03")
+cross.drop.marker.drop.test <- switch.order(cross.drop.marker.drop, "A03", c(17,19,6,18,16,20,21,7,15,14,5,4,12,11,13,8,9,10,2,3,1))
+cross.drop.marker.drop.test <- orderMarkers(cross.drop.marker.drop.test,  
+                                   window=4, use.ripple = T, maxit=4000, 
+                                   error.prob=0.0001)
+map.new <- est.map(cross.drop.marker.drop.test)
+plot.map(map.new)
+
+plotMap(cross.drop.marker.drop.test, chr='A03') 
+plot.rf(cross.drop.marker.drop.test, chr='A03', col.scheme = "redblue")
+plot.rf(cross.drop.marker.drop.test, col.scheme = "redblue")
+plot.rf(cross.drop.marker.drop, col.scheme = "redblue")
 
 # A04, no improvement, OK????? 
 plot.map(cross.drop.marker3, chr = "A04")
