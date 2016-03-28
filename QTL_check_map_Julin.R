@@ -120,7 +120,7 @@ double.crossover.count <- sapply(all.marker, function(marker){
 
 double.crossover.count <- as.data.frame(double.crossover.count)
 double.crossover.count
-dens(double.crossover.count)
+plot(density(double.crossover.count$double.crossover.count))
 marker.drop <- rownames(subset(double.crossover.count, double.crossover.count>10))
 marker.drop
 
@@ -132,7 +132,7 @@ cross.drop.marker.drop <- orderMarkers(cross.drop.marker.drop,
                           window=4, use.ripple = T, maxit=4000, 
                           error.prob=0.0001)
 
-map.new <- est.map(cross.drop.marker.drop)
+map.new <- est.map(cross.drop.marker.drop, error.prob = 0.001)
 plot.map(map.new)
 plot.rf(cross.drop.marker.drop, col.scheme = "redblue", alternate.chrid = T)
 
@@ -146,7 +146,7 @@ set.seed(1234)
 cross.drop.marker.drop <- orderMarkers(cross.drop.marker.drop,  
                                        window=4, use.ripple = T, maxit=4000, 
                                        error.prob=0.0001)
-map.new2 <- est.map(cross.drop.marker.drop)
+map.new2 <- est.map(cross.drop.marker.drop, error.prob = 0.001)
 summary.map(cross.drop.marker.drop)
 plot.map(map.new2)
 plot.rf(cross.drop.marker.drop, col.scheme = "redblue", alternate.chrid = T)
