@@ -3,7 +3,7 @@ library(ggplot2)
 library(reshape2)
 
 ###################### Read in cross data & data initial check ########################################
-setwd("~/Desktop/Brassica_project/QTL_mapping/map_construction/")
+setwd("~/Desktop/Brassica_project/QTL_mapping/map_construction/one_map/qtl/")
 cross <- read.cross(file="151212_rqrl_19_chrom_original.csv",
                    genotypes=c("N","H","D","X","Y"))
          
@@ -20,7 +20,7 @@ cross_m <- read.cross(file = "~/Desktop/Brassica_project/QTL_mapping/map_constru
                       genotypes=c("N","H","D","X","Y"))
 
 summary(cross_m) 
-
+pull.map(cross_m, chr = "A03")
 ################### Genotype data checking ##################################################################
 
 # 1) segregation distortion, Null hypothesis: no significant difference 

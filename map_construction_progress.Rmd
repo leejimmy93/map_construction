@@ -1,0 +1,60 @@
+---
+title: "map_construction_progress"
+author: "Ruijuan"
+date: "April 1, 2016"
+output: html_document
+---
+
+1) 
+```{}
+used original blast order for map construction in R/qtl
+
+code: test_blast_order.R
+
+Result: pairwise rf and LOD score figure suggest wrong chromosome assignment, so blast order cannot
+be used directly for map construction. 
+```
+
+2) 
+```{}
+filtered blast result using "reoder_blast_result.R"
+
+Result: only few markers have chromosome assignment, so this result cannot be directly used for map construction  
+```
+
+3) 
+```{}
+drop markers with double crossover more than 10 
+
+code: QTL_check_map_Ruijuan.R
+
+Result: looks like better order within each chromosome but got map extension problem again.
+```
+
+4) 
+```{}
+switch marker order within each chromosome, use physical position on indiviudal ref (napus & rapa) chromosome
+
+code: QTL_check_map_Ruijuan.R
+
+Result: pairwise rf and LOD score figure suggest wrong order again. 
+```
+
+5) 
+```{}
+try R/onemap for map construction 
+
+code: map_construction_onemap.R
+
+Result: min LOD score of 6 & max rf of 0.25 gives result very similar to FnP's genetic map 
+```
+
+
+
+
+
+
+
+
+
+
