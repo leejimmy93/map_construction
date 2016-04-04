@@ -3,7 +3,12 @@ library(ggplot2)
 library(reshape2)
 
 ###################### Read in cross data & data initial check ########################################
-setwd("~/Desktop/Brassica_project/QTL_mapping/map_construction/one_map/qtl/")
+if (Sys.getenv("USER")=="jmaloof") { 
+  setwd("~/git/map_construction/one_map/qtl/") 
+} else {
+  setwd("~/Desktop/Brassica_project/QTL_mapping/map_construction/one_map/qtl/")
+}
+
 cross <- read.cross(file="151212_rqrl_19_chrom_original.csv",
                    genotypes=c("N","H","D","X","Y"))
          
@@ -19,6 +24,12 @@ pull.map(cross, chr = c("A02","A06","C01","C09"))
 cross_m <- read.cross(file = "~/Desktop/Brassica_project/QTL_mapping/map_construction/151212_rqrl_19_chrom.csv", 
                       genotypes=c("N","H","D","X","Y"))
 
+#Above file does not exist.  For now sub in original
+
+if (Sys.getenv("USER")=="jmaloof") { 
+  cross_m <- cross
+}
+
 summary(cross_m) 
 pull.map(cross_m, chr = "A03")
 ################### Genotype data checking ##################################################################
@@ -26,6 +37,10 @@ pull.map(cross_m, chr = "A03")
 # 1) segregation distortion, Null hypothesis: no significant difference 
 test <- geno.table(cross_m)
 test[test$P.value < 0.01,] # which critical value should be used if not 0.05 or 0.01??? 
+
+# JNM: perhaps adjust p.value for multiple testing?
+
+# JNM: If you wrote this in Rmd then you wouldn't need to cut and paste the results...
 
 #### may remove later depends on the figure result
 #          chr missing AA AB BB not.BB not.AA      P.value
@@ -57,13 +72,18 @@ plot.rf(cross_m, col.scheme = "redblue", alternate.chrid = T)
 # estimate the genetic map
 nm <- est.map(cross_m)
 plot(nm, alternate.chrid = T) 
+plot(pull.map(cross_m),alternate.chrid = TRUE)
 pull.map(cross_m, chr = c("A03","A05")) # longer length was plot than what was indicated in the data? 
 pull.map(cross_m)
+
+# JNM: one important point here: the chromosomes where I consolidated linkage groups will have markers in the wrong place for sure because I just shoved everyting in front.
 
 ################ Remove the bad genotypes from a matrix in a rqtl cross object: assign "NA" to double recombinants
 ################ Written by Julin ###################################################################
 
 cross.drop.marker <- cross_m
+
+#JNM: We should be careful here...we might be losing some info for those markers that are misplaced, especially for the linkage groups that I forced together.  Thoses should be re-ordered before running this.
 
 for (chr in names(cross.drop.marker$geno)) { # for each chromosome in cross genotype data
   my.chr <- get(chr,cross.drop.marker$geno) # return the genotype data, including data & map
@@ -88,6 +108,8 @@ write.csv(pull.geno(cross.drop.marker),file="F2_415_Dropped_geno.csv")
 # calculate new map and replace map
 newmap.drop.marker <- est.map(cross.drop.marker,verbose=T,error.prob=.01) # why going through 
 # the last section of code doesn't assign new map 
+# JNM: I am not sure which section you are asking about
+
 cross.drop.marker <- replace.map(cross.drop.marker, newmap.drop.marker)
 
 ############################ draw graph for new cross data ###############################
@@ -114,6 +136,7 @@ all.marker <- colnames(geno)
 geno_new <- pull.geno(cross.drop.marker)
 
 # calculate the number of double crossover for each marker
+#JNM: I take it that the idea is that the new "NAs" are genotypes that I pulled out from above.
 double.crossover.count <- sapply(all.marker, function(marker){
   sum(is.na(geno_new[,marker]))-sum(is.na(geno[,marker]))
 }
@@ -121,7 +144,7 @@ double.crossover.count <- sapply(all.marker, function(marker){
 
 double.crossover.count <- as.data.frame(double.crossover.count)
 double.crossover.count
-dens(double.crossover.count)
+dens(double.crossover.count) #JNM: what is this?  function not found
 marker.drop <- rownames(subset(double.crossover.count, double.crossover.count>10))
 marker.drop
 
@@ -129,13 +152,19 @@ marker.drop
 cross.drop.marker.drop <- drop.markers(cross.drop.marker, marker.drop)
 summary(cross.drop.marker.drop)
 
+# JNM: if we estimate the map here, what happens?
+
 set.seed(5678)
 cross.drop.marker.drop <- orderMarkers(cross.drop.marker.drop,  
-                          window=4, use.ripple = T, maxit=4000, 
-                          error.prob=0.0001)
+                          window=5, use.ripple = T, maxit=4000, 
+                          error.prob=0.01)
+
 
 map.new <- est.map(cross.drop.marker.drop)
 plot.map(cross.drop.marker, map.new, alternate.chrid = TRUE)
+
+#So it is a mess.   Often just because of one or two markers.  Why are cM posisions between markers >> 50? I don't understand that.
+
 plot.rf(cross.drop.marker.drop, col.scheme = "redblue", alternate.chrid = T)
 write.csv(pull.geno(cross.drop.marker.drop),file="F2_415_dropp_geno_Ruijuan.csv")
 
