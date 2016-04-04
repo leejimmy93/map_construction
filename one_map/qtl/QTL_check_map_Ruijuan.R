@@ -187,6 +187,13 @@ plot.rf(cross.drop.marker, chr = "A03", col.scheme = "redblue", alternate.chrid 
 plot.rf(cross.drop.marker.drop, chr = "A03", col.scheme = "redblue", alternate.chrid = T)
 pull.map(cross.drop.marker.drop, chr = "A03")
 
+#could the genotypes be reversed?
+geno.A03.gap <- pull.geno(cross.drop.marker.drop, chr="A03")
+cor(geno.A03.gap,use="pairwise.complete.obs")
+min(cor(geno.A03.gap,use="pairwise.complete.obs"))
+#Doesn't look like it...
+
+
 # remove segregation problem markers, doesn't seem work...  
 test <- drop.markers(cross.drop.marker.drop, "FPBPN0006")
 set.seed(1)
