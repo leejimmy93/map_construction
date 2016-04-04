@@ -16,7 +16,7 @@ pull.map(cross, chr = c("A02","A06","C01","C09"))
 # go to original .csv file, change the second groups' names to x_1 
 
 ## import the modified cross data
-cross_m <- read.cross(file = "~/Desktop/Brassica_project/QTL_mapping/map_construction/151212_rqrl_19_chrom.csv", 
+cross_m <- read.cross(file = "~/Desktop/Brassica_project/QTL_mapping/map_construction/one_map/qtl/151212_rqrl_19_chrom.csv", 
                       genotypes=c("N","H","D","X","Y"))
 
 summary(cross_m) 
